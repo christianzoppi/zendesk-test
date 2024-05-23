@@ -1,9 +1,28 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Card from '../components/Card.astro';
+import jwt from "jsonwebtoken";
+const userId = Astro.url.searchParams.get("id");
+const zendeskAppId = import.meta.env.PUBLIC_ZENDESK_APP_ID;
+const zendeskSecret = import.meta.env.PUBLIC_ZENDESK_SECRET;
+const zendeskUrl = import.meta.env.PUBLIC_ZENDESK_URL;
+const header = {
+  alg: "HS256",
+  typ: "JWT",
+  kid: zendeskAppId,
+};
+const userEmail = `auth-${userId}@christianzoppi.com`;
+const jwtToken = jwt.sign({ scope: "user", external_id: userEmail, email: userEmail, name: `Christian Zoppi ${userId}` }, zendeskSecret, { header });
 ---
 
 <Layout title="Welcome to Astro.">
+	<script id="ze-snippet" src={zendeskUrl} is:inline></script>
+    <script is:inline define:vars={{ jwtToken, userEmail }}>
+      window.zE("messenger", "loginUser", function (callback) {
+        console.log(jwtToken, userEmail);
+        callback(jwtToken);
+      });
+    </script>
 	<main>
 		<svg
 			class="astro-a"
